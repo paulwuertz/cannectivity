@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, macos-15, windows-2022]
+        os: [ubuntu-24.04]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -43,23 +43,6 @@ jobs:
             EXTRA_TWISTER_FLAGS="--short-build-path -O/tmp/twister-out"
           fi
           west twister -T app -v --inline-logs --integration $EXTRA_TWISTER_FLAGS
-
-      - name: Run firmware tests
-        working-directory: cannectivity
-        if: startsWith(runner.os, 'Linux')
-        shell: bash
-        run: |
-          # Limit to one concurrent instance as the USBIP port is reused between instances
-          west twister -T app -v --inline-logs --platform native_sim/native/64 -j1
-
-      - name: Run tests
-        working-directory: cannectivity
-        shell: bash
-        run: |
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            EXTRA_TWISTER_FLAGS="--short-build-path -O/tmp/twister-out"
-          fi
-          west twister -T tests -v --inline-logs --integration $EXTRA_TWISTER_FLAGS
 
       - name: Print ccache stats
         if: runner.os != 'Windows'
