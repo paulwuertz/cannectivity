@@ -21,6 +21,10 @@ jobs:
       matrix:
         os: [ubuntu-26.04]
     runs-on: ${{ matrix.os }}
+
+    outputs:
+      stack_stats: ${{ steps.stackdiff.outputs.STACKSTATS }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -68,19 +72,10 @@ jobs:
           git clone https://github.com/paulwuertz/pexplorer
           cd pexplorer/selfperf
 
-          ls -la /home/runner/work/cannectivity/cannectivity/cannectivity/twister-*/
-          ls -la /home/runner/work/cannectivity/cannectivity/cannectivity/twister-*/nucleo_h723zg_stm32h723xx
-          ls -la /home/runner/work/cannectivity/cannectivity/cannectivity/twister-*/nucleo_h723zg_stm32h723xx/zephyr_gnu/cannectivity/app/
-          ls -la /home/runner/work/cannectivity/cannectivity/cannectivity/twister-*/nucleo_h723zg_stm32h723xx/zephyr_gnu/cannectivity/app/app.cannectivity*
-
           ARGS="";
           for ELF in `ls /home/runner/work/cannectivity/cannectivity/cannectivity/twister-out/*/zephyr_gnu/cannectivity/app/app.cannectivity.debug/zephyr/zephyr.elf` ; do
             ARGS="$ARGS --elf $ELF";
           done
-
-          echo $ARGS
-          echo $ARGS
-          echo $ARGS
 
           STACKSTATS=$(go run ./cmd/stackcheck_boards/stackcheck_boards.go \
             -c /home/runner/work/cannectivity/cannectivity/cannectivity/app/pexplorer-config-usbrxcalls.json \
@@ -121,6 +116,7 @@ jobs:
   #   types: [opened, synchronize, reopened]
   update-stackuse-comment:
     if: github.event_name == 'pull_request'
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Update PR comment
@@ -136,7 +132,7 @@ jobs:
 
             Updated: ${new Date().toISOString()}
 
-            ${ steps.step1.outputs }"
+            ${{ needs.build.outputs.stack_stats }}"
             `;
 
             const { data: comments } = await github.rest.issues.listComments({
